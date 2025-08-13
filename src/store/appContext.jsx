@@ -29,7 +29,7 @@ export default function StoreProvider({ children }) {
   const actions = useMemo(() => {
     return {
       getContacts: () => {
-       
+        
         const mockData = [
           {
             id: 1,
@@ -56,14 +56,12 @@ export default function StoreProvider({ children }) {
         dispatchBase({ type: "delete_contact", payload: id });
       }
     };
-    
   }, [dispatchBase]);
 
-
+  
   const dispatch = useCallback(
     (fnOrAction) => {
       if (typeof fnOrAction === "function") {
-      
         return fnOrAction(actions);
       }
       return dispatchBase(fnOrAction);
@@ -71,13 +69,17 @@ export default function StoreProvider({ children }) {
     [actions, dispatchBase]
   );
 
-  r
+
   const value = useMemo(() => ({ store, dispatch, actions }), [store, dispatch, actions]);
 
+  
   useEffect(() => {
     actions.getContacts();
-   
-  }, []); 
+  }, [actions]);
 
-  return <Context.Provider value={value}>{children}</Context.Provider>;
+  return (
+    <Context.Provider value={value}>
+      {children}
+    </Context.Provider>
+  );
 }
