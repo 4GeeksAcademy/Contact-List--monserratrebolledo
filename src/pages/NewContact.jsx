@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import useGlobalReducer from "../hooks/useGlobalReducer";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 export default function NewContact() {
-  const { dispatch } = useGlobalReducer();
+  const {store, dispatch } = useGlobalReducer();
+  const {id} = useParams()
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -15,16 +16,62 @@ export default function NewContact() {
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
+  const  addContact= async (contact) => {
+    try {
+      const res = await fetch(`${store.apiUrl}/agendas/${store.agendaSlug}/contacts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(contact),
+      });
+      if(res.ok) {
+        const data = await res.json()
+        dispatch({ type: "add_contact", payload: data });
+      }
+    } catch (error) {
+      console.error("Error adding contact:", error);
+    }
+  }
+
+  const updateContact= async (id, updatedContact) => {
+    try {
+      const res = await fetch(`${store.apiUrl}/agendas/${store.agendaSlug}/contacts/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedContact),
+      });
+      if(res.ok) {
+        const data = await res.json()
+        dispatch({ type: "update_contact", payload: data });
+      }
+    } catch (error) {
+      console.error("Error updating contact:", error);
+    }
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.name || !form.email) {
       alert("Name and email required");
       return;
     }
-    dispatch((actions) => actions.addContact(form));
+    if(!id) {
+      addContact(form)
+    } else {
+      updateContact( id,form)
+    }
+    
    
-    navigate("/contacts");
+    navigate("/");
   };
+
+  useEffect(() => {
+    if(store.contacts){
+      if(store.contacts.length > 0 && id){
+        const result = store.contacts.find(c => c.id == id)
+        if(result) setForm(result)
+      }
+    }
+  }, [id, store.contacts]);
 
   return (
     <div className="container mt-4">

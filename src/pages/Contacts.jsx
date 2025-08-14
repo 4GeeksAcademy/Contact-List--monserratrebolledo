@@ -8,41 +8,45 @@ export default function Contacts() {
   const { store, dispatch } = useGlobalReducer();
   const [contactToDelete, setContactToDelete] = useState(null);
   const navigate = useNavigate();
+  
+   const getContacts= async () => {
+    try {
+      const res = await fetch(`${store.apiUrl}/agendas/${store.agendaSlug}/contacts`);
+      const data = await res.json();
+      dispatch({ type: "set_contacts", payload: data.contacts || [] });
+    } catch (error) {
+      console.error("Error fetching contacts:", error);
+    }
+  }
 
-  const fallbackContacts = [
-    {
-      id: 1001,
-      name: "Juan Barrientos",
-      address: "Av. Principal 123",
-      phone: "(+56) 9 1111 1111",
-      email: "juan.barrientos@example.com",
-    },
-    {
-      id: 1002,
-      name: "Marcela Cares",
-      address: "Calle Secundaria 456",
-      phone: "(+56) 9 2222 2222",
-      email: "marcela.cares@example.com",
-    },
-  ];
+  const deleteContact= async (id) => {
+    try {
+      const res= await fetch(`${store.apiUrl}/agendas/${store.agendaSlug}/contacts/${id}`, {
+        method: "DELETE",
+      });
+      if(res.ok) {
+        dispatch({ type: "delete_contact", payload: id });
+      }
+    } catch (error) {
+      console.error("Error deleting contact:", error);
+    }
+  }
 
-  useEffect(() => {
-
-    dispatch((actions) => actions.getContacts());
-  }, [dispatch]);
+ 
 
   const confirmDelete = (id) => setContactToDelete(id);
 
   const handleDelete = () => {
     if (!contactToDelete) return;
-    dispatch((actions) => actions.deleteContact(contactToDelete));
+    deleteContact(contactToDelete)
     setContactToDelete(null);
   };
+    
+ useEffect(() => {
+    getContacts()
+  }, []);
 
-  const contactsToRender =
-    store && Array.isArray(store.contacts) && store.contacts.length > 0
-      ? store.contacts
-      : fallbackContacts;
+   
 
   return (
     <div className="container mt-4">
@@ -56,11 +60,11 @@ export default function Contacts() {
       </div>
 
       <div className="list-group">
-        {contactsToRender.length === 0 && (
+        {store.contacts.length === 0 && (
           <div className="text-center text-muted py-5">No contacts yet</div>
         )}
 
-        {contactsToRender.map((c) => (
+        {store.contacts.map((c) => (
           <div key={c.id} className="list-group-item d-flex align-items-center">
           
             <div
